@@ -1,5 +1,10 @@
 # JuliaSyntaxBridge — Proof of Concept
 
+IMAGES: 
+<img width="1167" height="635" alt="1" src="https://github.com/user-attachments/assets/2539ff89-ad49-4de9-bc23-f114cec3080d" />
+<img width="1192" height="672" alt="2" src="https://github.com/user-attachments/assets/f8ea8583-8608-41ab-9f0f-13aa2a4de539" />
+<img width="1148" height="686" alt="3" src="https://github.com/user-attachments/assets/1f22419e-b2e2-4d76-bcb0-be147907c512" />
+
 A proof-of-concept bridge connecting
 `JuliaSyntaxHighlighting.jl` (Julia stdlib) to HTML `<span>` elements
 using `hljs-*` CSS classes compatible with all existing Documenter.jl themes.
@@ -77,3 +82,6 @@ JuliaSyntaxBridge_poc.jl   ← entire POC (~180 lines)
 highlighted.html            ← generated output (open in browser)
 README.md                   ← this file
 ```
+
+
+
