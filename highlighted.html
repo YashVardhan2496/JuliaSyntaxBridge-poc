@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JuliaSyntaxBridge — POC</title>
+<style>
+body {
+    font-family: -apple-system, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem;
+    line-height: 1.6;
+}
+h1  { color: #9b72cf; border-bottom: 2px solid #9b72cf; padding-bottom: .5rem; }
+h2  { color: #7cb4dd; font-size: 1rem; margin: 1.8rem 0 .3rem; }
+pre {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 1rem 1.4rem;
+    overflow-x: auto;
+    margin: .4rem 0 1.2rem;
+}
+code {
+    font-family: "JuliaMono","Fira Code",monospace;
+    font-size: .87rem;
+    line-height: 1.75;
+}
+.stats {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: .8rem 1.4rem;
+    margin-bottom: 1.8rem;
+    font-size: .85rem;
+    color: #7cb4dd;
+}
+.stats span { margin-right: 1.5rem; }
+.good { color: #7dbb8a; }
+.hljs-keyword     { color: #ff7b72; font-weight: bold; }
+.hljs-string      { color: #79c0ff; }
+.hljs-comment     { color: #8b949e; font-style: italic; }
+.hljs-number      { color: #d2a679; }
+.hljs-meta        { color: #d2a679; font-weight: bold; }
+.hljs-title       { color: #7ee787; }
+.hljs-operator    { color: #79c0ff; }
+.hljs-type        { color: #f0c674; }
+.hljs-built_in    { color: #ffa657; }
+.hljs-symbol      { color: #d2a679; }
+.hljs-char        { color: #96d0ff; }
+.hljs-regexp      { color: #7ee787; }
+.hljs-punctuation { color: #c9d1d9; }
+.hljs-error       { background: #8b1a1a; color: #fff; }
+</style>
+</head>
+<body>
+<h1>JuliaSyntaxBridge — Proof of Concept</h1>
+<p>
+Bridges <strong>JuliaSyntaxHighlighting.jl</strong> (Julia stdlib)
+to Documenter.jl HTML spans.<br>
+Real AST parsing · Zero new dependencies · Zero Node.js · Build-time highlighting.
+</p>
+<div class="stats">
+<span>Engine: <strong>JuliaSyntaxHighlighting.jl</strong> (stdlib)</span>
+<span class="good">✓ Zero new dependencies</span>
+<span class="good">✓ Zero subprocesses</span>
+<span class="good">✓ Zero regex</span>
+</div>
+<h2>Basic function definition</h2>
+<pre><code class="language-julia julia-hl"><span class="hljs-keyword">function</span> <span class="hljs-title">greet</span><span class="hljs-punctuation">(</span>name<span class="hljs-type">::</span><span class="hljs-type">String</span><span class="hljs-punctuation">)</span>
+    <span class="hljs-title">println</span><span class="hljs-punctuation">(</span><span class="hljs-string">&quot;</span><span class="hljs-string">Hello, </span>$name<span class="hljs-string">&quot;</span><span class="hljs-punctuation">)</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-symbol">nothing</span>
+<span class="hljs-keyword">end</span></code></pre>
+<h2>Macros — misclassified by highlight.js</h2>
+<pre><code class="language-julia julia-hl"><span class="hljs-meta">@time</span> <span class="hljs-keyword">begin</span>
+    result <span class="hljs-operator">=</span> <span class="hljs-meta">@allocated</span> <span class="hljs-title">sort</span><span class="hljs-punctuation">(</span><span class="hljs-title">rand</span><span class="hljs-punctuation">(</span><span class="hljs-number">1000</span><span class="hljs-punctuation">)</span><span class="hljs-punctuation">)</span>
+    <span class="hljs-meta">@assert</span> result &gt; <span class="hljs-number">0</span>
+    <span class="hljs-meta">@info</span> <span class="hljs-string">&quot;</span><span class="hljs-string">Done</span><span class="hljs-string">&quot;</span> result
+<span class="hljs-keyword">end</span></code></pre>
+<h2>String interpolation — regex cannot model this</h2>
+<pre><code class="language-julia julia-hl">user <span class="hljs-operator">=</span> <span class="hljs-string">&quot;</span><span class="hljs-string">Julia</span><span class="hljs-string">&quot;</span>
+msg  <span class="hljs-operator">=</span> <span class="hljs-string">&quot;</span><span class="hljs-string">Hello, </span>$<span class="hljs-punctuation">(</span>user<span class="hljs-punctuation">)</span><span class="hljs-string">! Version </span>$<span class="hljs-punctuation">(</span>VERSION<span class="hljs-punctuation">)</span><span class="hljs-string">.</span><span class="hljs-string">&quot;</span>
+cmd  <span class="hljs-operator">=</span> `echo $msg`</code></pre>
+<h2>Unicode identifiers — often broken by highlight.js</h2>
+<pre><code class="language-julia julia-hl">α  <span class="hljs-operator">=</span> <span class="hljs-number">0.01</span>
+<span class="hljs-title">∇f</span><span class="hljs-punctuation">(</span>x<span class="hljs-punctuation">)</span> <span class="hljs-operator">=</span> <span class="hljs-number">2</span>x
+Δt <span class="hljs-operator">=</span> <span class="hljs-number">1e-3</span>
+x̄  <span class="hljs-operator">=</span> <span class="hljs-title">sum</span><span class="hljs-punctuation">(</span>α <span class="hljs-operator">.</span>* <span class="hljs-title">∇f</span><span class="hljs-operator">.</span><span class="hljs-punctuation">(</span><span class="hljs-number">1</span>:<span class="hljs-number">10</span><span class="hljs-punctuation">)</span><span class="hljs-punctuation">)</span> * Δt</code></pre>
+<h2>Numeric literals — all forms</h2>
+<pre><code class="language-julia julia-hl">hex     <span class="hljs-operator">=</span> <span class="hljs-number">0x1f3a</span>
+binary  <span class="hljs-operator">=</span> <span class="hljs-number">0b1010_1100</span>
+octal   <span class="hljs-operator">=</span> <span class="hljs-number">0o755</span>
+sci     <span class="hljs-operator">=</span> <span class="hljs-number">1.5e-3</span>
+complex <span class="hljs-operator">=</span> <span class="hljs-number">2</span> + <span class="hljs-number">3</span>im
+big     <span class="hljs-operator">=</span> <span class="hljs-number">1_000_000</span></code></pre>
+<h2>Nested block comments — highlight.js fails here</h2>
+<pre><code class="language-julia julia-hl"><span class="hljs-comment">#= outer comment
+   #= inner nested comment =#
+   still in outer
+=#</span>
+x <span class="hljs-operator">=</span> <span class="hljs-number">42</span>  <span class="hljs-comment"># inline comment</span></code></pre>
+<h2>Type annotations and where clauses</h2>
+<pre><code class="language-julia julia-hl"><span class="hljs-keyword">struct</span> <span class="hljs-type">Container</span><span class="hljs-punctuation">{</span>T &lt;: <span class="hljs-type">AbstractFloat</span><span class="hljs-punctuation">}</span>
+    value <span class="hljs-type">::</span><span class="hljs-type"> T</span>
+    label <span class="hljs-type">::</span><span class="hljs-type"> String</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-keyword">function</span> <span class="hljs-title">process</span><span class="hljs-punctuation">(</span>c<span class="hljs-type">::</span><span class="hljs-type">Container{T}</span><span class="hljs-punctuation">)</span> <span class="hljs-keyword">where</span><span class="hljs-type"> {T}</span>
+    <span class="hljs-keyword">return</span> c.value <span class="hljs-type">::</span><span class="hljs-type"> T</span>
+<span class="hljs-keyword">end</span></code></pre>
+<h2>Error recovery — malformed code must not crash</h2>
+<pre><code class="language-julia julia-hl"><span class="hljs-keyword">function</span> <span class="hljs-title">incomplete</span><span class="hljs-punctuation">(</span>x
+y = x <span class="hljs-operator">+</span></code></pre>
+</body>
+</html>
