@@ -37,11 +37,12 @@ Julia code → JuliaSyntaxHighlighting.highlight() → bridge → colored HTML
 | Case | highlight.js | This Bridge |
 |------|-------------|-------------|
 | `@time`, `@assert` — macros | Often wrong | ✓ Correct |
-| `"Hello $name"` — interpolation | Regex cannot model | ✓ Correct |
+| `"Hello $name"` — interpolation | Flat token, no separation | ✓ String segments correctly tokenized, interpolation delimiters separated |
 | `α`, `∇f`, `Δt` — unicode | Often broken | ✓ Correct |
 | `0x1f`, `1.5e-3` — numerics | Sometimes wrong | ✓ Correct |
 | `#= nested =# ` — block comments | Wrong | ✓ Correct |
 | Malformed code | May crash | ✓ Graceful recovery |
+| Double-nested type spans | N/A | Minor redundancy — renders identically, cleaned up in final DOM.jl integration |
 
 ## Run It
 
@@ -78,10 +79,14 @@ FACE_TO_CSS mapping table
 
 ## Files
 ```
-JuliaSyntaxBridge_poc.jl   ← entire POC (~270 lines)
+JuliaSyntaxBridge_poc.jl   ← entire POC (~320 lines)
 highlighted.html            ← generated output (open in browser)
 README.md                   ← this file
 ```
+
+> **Note:** This POC emits raw HTML strings for simplicity. 
+> The final Documenter.jl integration will use `DOM.jl` 
+> constructors instead, consistent with HTMLWriter.jl patterns.
 
 
 
