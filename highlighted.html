@@ -38,7 +38,7 @@ code {
     color: #7cb4dd;
 }
 .stats span { margin-right: 1.5rem; }
-.good { color: #7dbb8a; }
+.good  { color: #7dbb8a; }
 .hljs-keyword     { color: #ff7b72; font-weight: bold; }
 .hljs-string      { color: #79c0ff; }
 .hljs-comment     { color: #8b949e; font-style: italic; }
@@ -67,9 +67,10 @@ Real AST parsing · Zero new dependencies · Zero Node.js · Build-time highligh
 <span class="good">✓ Zero new dependencies</span>
 <span class="good">✓ Zero subprocesses</span>
 <span class="good">✓ Zero regex</span>
+<span class="good">✓ Overlapping annotations → correctly nested spans</span>
 </div>
 <h2>Basic function definition</h2>
-<pre><code class="language-julia julia-hl"><span class="hljs-keyword">function</span> <span class="hljs-title">greet</span><span class="hljs-punctuation">(</span>name<span class="hljs-type">::</span><span class="hljs-type">String</span><span class="hljs-punctuation">)</span>
+<pre><code class="language-julia julia-hl"><span class="hljs-keyword">function</span> <span class="hljs-title">greet</span><span class="hljs-punctuation">(</span>name<span class="hljs-type">::</span><span class="hljs-type"><span class="hljs-type">String</span></span><span class="hljs-punctuation">)</span>
     <span class="hljs-title">println</span><span class="hljs-punctuation">(</span><span class="hljs-string">&quot;</span><span class="hljs-string">Hello, </span>$name<span class="hljs-string">&quot;</span><span class="hljs-punctuation">)</span>
     <span class="hljs-keyword">return</span> <span class="hljs-symbol">nothing</span>
 <span class="hljs-keyword">end</span></code></pre>
@@ -104,10 +105,10 @@ x <span class="hljs-operator">=</span> <span class="hljs-number">42</span>  <spa
 <h2>Type annotations and where clauses</h2>
 <pre><code class="language-julia julia-hl"><span class="hljs-keyword">struct</span> <span class="hljs-type">Container</span><span class="hljs-punctuation">{</span>T &lt;: <span class="hljs-type">AbstractFloat</span><span class="hljs-punctuation">}</span>
     value <span class="hljs-type">::</span><span class="hljs-type"> T</span>
-    label <span class="hljs-type">::</span><span class="hljs-type"> String</span>
+    label <span class="hljs-type">::</span><span class="hljs-type"> <span class="hljs-type">String</span></span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-keyword">function</span> <span class="hljs-title">process</span><span class="hljs-punctuation">(</span>c<span class="hljs-type">::</span><span class="hljs-type">Container{T}</span><span class="hljs-punctuation">)</span> <span class="hljs-keyword">where</span><span class="hljs-type"> {T}</span>
+<span class="hljs-keyword">function</span> <span class="hljs-title">process</span><span class="hljs-punctuation">(</span>c<span class="hljs-type">::</span><span class="hljs-type"><span class="hljs-type">Container</span><span class="hljs-punctuation">{</span><span class="hljs-type">T</span><span class="hljs-punctuation">}</span></span><span class="hljs-punctuation">)</span> <span class="hljs-keyword">where</span><span class="hljs-type"> <span class="hljs-punctuation">{</span>T<span class="hljs-punctuation">}</span></span>
     <span class="hljs-keyword">return</span> c.value <span class="hljs-type">::</span><span class="hljs-type"> T</span>
 <span class="hljs-keyword">end</span></code></pre>
 <h2>Error recovery — malformed code must not crash</h2>
