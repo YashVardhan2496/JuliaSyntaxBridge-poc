@@ -1,19 +1,23 @@
-# JuliaSyntaxBridge.jl — Proof of Concept
-# Bridges JuliaSyntaxHighlighting.jl (Julia stdlib) to Documenter.jl HTML spans.
+# JuliaSyntaxBridge.jl — PoC
+# Bridges JuliaSyntaxHighlighting.jl (Julia stdlib) into Documenter.jl HTML spans.
 #
-# Fixes over v1:
-#   1. Unicode-safe annotation sorting (span width, not string length)
-#   2. Infinite loop guard for zero-width / identical annotations
-#   3. No raw string interpolation in span emission
-#   4. julia-repl block handling (prompt + output + error lines)
-#   5. VERSION guard with graceful degradation for Julia < 1.11
-#   6. Complete XSS / injection test coverage
-#   7. BenchmarkTools performance comparison vs Node.js IPC baseline
+# What this does: takes a Julia code string, runs it through the stdlib AST
+# highlighter, and turns the resulting annotations into <span class="hljs-*">
+# tags that Documenter's existing CSS themes already know how to colour.
+#
+# Fixes applied over v1:
+#   1. Sort by integer byte span not string length — fixes Unicode identifiers like α, ∇
+#   2. Zero-width annotation guard — malformed/incomplete code no longer causes infinite recursion
+#   3. write() instead of string interpolation for span emission — eliminates XSS surface
+#   4. julia-repl block handling — prompt lines, output, errors all handled separately
+#   5. VERSION guard — returns plain escaped text on Julia < 1.11, no crash
+#   6. XSS test suite — 6 injection scenarios
+#   7. Benchmark against Node.js IPC baseline
 
 # ---------------------------------------------------------------------------
-# VERSION GUARD — graceful degradation on Julia < 1.11
-# JuliaSyntaxHighlighting.jl became stdlib in Julia 1.11.
-# On older versions we return safely escaped plain text — no crash, no error.
+# VERSION GUARD
+# JuliaSyntaxHighlighting became stdlib in Julia 1.11. On older versions we
+# just return safely escaped plain text. The caller never needs to know.
 # ---------------------------------------------------------------------------
 const JULIASYNTAX_AVAILABLE = VERSION >= v"1.11"
 
@@ -23,9 +27,16 @@ end
 
 # ---------------------------------------------------------------------------
 # Face → CSS class mapping
-# Face names are documented as liable to change without warning in point
-# releases. All stdlib calls are isolated to highlight_html() so any upstream
-# change requires modification in exactly one place.
+#
+# Left side: face names defined in JuliaSyntaxHighlighting.jl HIGHLIGHT_FACES
+# Right side: hljs-* classes from Documenter's existing CSS themes
+#
+# Built from reading the actual HIGHLIGHT_FACES list in the stdlib source +
+# verifying each face name by running Base.annotations() on real code.
+# Unknown faces fall through silently in emit_range() — unknown ≠ crash.
+#
+# Note: rainbow levels go up to 6 (MAX_PAREN_HIGHLIGHT_DEPTH in stdlib).
+# We tested 3 levels but the stdlib comment is explicit so covering all 6.
 # ---------------------------------------------------------------------------
 const FACE_TO_CSS = Dict{Symbol, String}(
     :julia_keyword              => "hljs-keyword",
@@ -51,26 +62,38 @@ const FACE_TO_CSS = Dict{Symbol, String}(
     :julia_char                 => "hljs-string",
     :julia_char_delim           => "hljs-string",
     :julia_regex                => "hljs-regexp",
+    :julia_error                => "hljs-error",
+    :julia_unpaired_parentheses => "hljs-error",
+    :julia_parentheses          => "hljs-punctuation",
+    :julia_subst                => "hljs-subst",
+    # rainbow parens — 6 levels per MAX_PAREN_HIGHLIGHT_DEPTH
     :julia_rainbow_paren_1      => "hljs-punctuation",
     :julia_rainbow_paren_2      => "hljs-punctuation",
     :julia_rainbow_paren_3      => "hljs-punctuation",
+    :julia_rainbow_paren_4      => "hljs-punctuation",
+    :julia_rainbow_paren_5      => "hljs-punctuation",
+    :julia_rainbow_paren_6      => "hljs-punctuation",
+    # rainbow brackets — 6 levels
     :julia_rainbow_bracket_1    => "hljs-punctuation",
     :julia_rainbow_bracket_2    => "hljs-punctuation",
+    :julia_rainbow_bracket_3    => "hljs-punctuation",
+    :julia_rainbow_bracket_4    => "hljs-punctuation",
+    :julia_rainbow_bracket_5    => "hljs-punctuation",
+    :julia_rainbow_bracket_6    => "hljs-punctuation",
+    # rainbow curly — 6 levels, needed for parametric types like Dict{K,V}
     :julia_rainbow_curly_1      => "hljs-punctuation",
     :julia_rainbow_curly_2      => "hljs-punctuation",
-    :julia_parentheses          => "hljs-punctuation",
-    :julia_subst                => "hljs-subst",
-    :julia_error                => "hljs-error",
+    :julia_rainbow_curly_3      => "hljs-punctuation",
+    :julia_rainbow_curly_4      => "hljs-punctuation",
+    :julia_rainbow_curly_5      => "hljs-punctuation",
+    :julia_rainbow_curly_6      => "hljs-punctuation",
 )
 
 # ---------------------------------------------------------------------------
-# HTML escaping
-# Replaces the five characters that can break HTML or enable XSS.
-# This is the ONLY place raw code touches HTML output — no interpolation
-# of user-derived strings anywhere else in the pipeline.
+# HTML escaping — five characters, & must go first
 # ---------------------------------------------------------------------------
 function escape_html(s::AbstractString) :: String
-    s = replace(s, "&"  => "&amp;")   # must be first
+    s = replace(s, "&"  => "&amp;")
     s = replace(s, "<"  => "&lt;")
     s = replace(s, ">"  => "&gt;")
     s = replace(s, "\"" => "&quot;")
@@ -79,41 +102,36 @@ function escape_html(s::AbstractString) :: String
 end
 
 # ---------------------------------------------------------------------------
-# Unicode-safe annotation sort key
+# annotation_sort_key
 #
-# FIX 1: The original used -length(region) which counts codeunits, not
-# character spans. For Unicode identifiers like α or ∇ this produces wrong
-# nesting order. We use the actual integer span instead.
+# FIX 1: previously sorted by -length(region) which counts codeunits.
+# That breaks on multibyte chars — α is 2 codeunits but 1 character, so
+# two annotations that look adjacent by string length can actually overlap
+# by byte position. Using the integer positions directly avoids this.
 #
-# Sort order: start ascending, span descending (outer annotations first).
-# This guarantees parents always appear before their children in the list.
+# Outer annotations need to come first so sort: start asc, span desc.
 # ---------------------------------------------------------------------------
 function annotation_sort_key(ann)
     region = ann[1]
-    start  = first(region)
-    span   = last(region) - first(region)   # integer positions, Unicode-safe
-    return (start, -span)
+    span   = last(region) - first(region)
+    return (first(region), -span)
 end
 
 # ---------------------------------------------------------------------------
-# Recursive nested span emitter
+# emit_range — recursive span emitter
 #
-# FIX 2: Added `from > to` guard at the top to prevent infinite recursion
-# when JuliaSyntaxHighlighting produces zero-width or identical annotations
-# (which can happen for synthetic AST nodes on malformed input).
+# This is the core of the bridge. The problem is that stdlib annotations
+# can overlap — "Hello $name" gets an outer :julia_string covering the whole
+# thing AND inner annotations for the interpolated part. A flat loop drops
+# the inner spans. Recursion handles it correctly.
 #
-# FIX 3: Span emission uses write() with separate arguments instead of
-# string interpolation — `cls` comes from our own dictionary so it is safe
-# today, but this pattern eliminates the risk class entirely.
+# FIX 2: the from > to guard catches zero-width annotations that
+# JuliaSyntaxHighlighting produces for some synthetic AST nodes on
+# incomplete code. Without it you get infinite recursion.
 #
-# Algorithm:
-#   1. Pre-sorted annotations: start ascending, span descending (outer first)
-#   2. For each annotation in [from, to]:
-#      a. Emit plain escaped text before it
-#      b. Collect all annotations fully contained within it (children)
-#      c. Recurse into the interior
-#      d. Wrap result in <span class="..."> if face is known
-#   3. Emit any remaining plain text after all annotations
+# FIX 3: write() with separate string arguments instead of interpolation.
+# cls comes from our own dict so it is safe today, but this pattern means
+# no user-derived string ever gets interpolated into a tag attribute.
 # ---------------------------------------------------------------------------
 function emit_range(
     buf  :: IOBuffer,
@@ -123,7 +141,6 @@ function emit_range(
     to   :: Int,
     idx  :: Int,
 )
-    # FIX 2: zero-width or inverted window guard
     from > to && return
 
     pos = from
@@ -134,49 +151,46 @@ function emit_range(
         rstart = first(region)
         rend   = last(region)
 
-        # Annotation starts beyond our current window — stop
         rstart > to && break
 
-        # Annotation partially outside our window — skip
+        # annotation straddles our window boundary — skip it
         if rend > to
             i += 1
             continue
         end
 
-        # FIX 2: zero-width annotation guard — skip to avoid infinite recursion
+        # zero-width annotation — skip to avoid infinite recursion (FIX 2)
         if rstart > rend
             i += 1
             continue
         end
 
-        # Emit plain text that precedes this annotation
+        # plain text before this annotation
         if pos < rstart
             write(buf, escape_html(code[pos:prevind(code, rstart)]))
         end
 
-        # Find first annotation NOT fully contained within [rstart, rend]
+        # find the first annotation NOT fully inside [rstart, rend]
         j = i + 1
         while j <= length(anns)
             cr = anns[j][1]
             first(cr) >= rstart && last(cr) <= rend ? j += 1 : break
         end
 
-        # Recursively render the interior of this annotation
+        # render the interior recursively
         inner_buf = IOBuffer()
         emit_range(inner_buf, code, anns, rstart, rend, i + 1)
         inner = String(take!(inner_buf))
 
-        # If recursion produced nothing, fall back to escaped raw text
         if isempty(inner)
             inner = escape_html(code[rstart:rend])
         end
 
-        # FIX 3: no string interpolation — write() with separate arguments
+        # FIX 3: write() not interpolation
         if haskey(FACE_TO_CSS, face)
             cls = FACE_TO_CSS[face]
             write(buf, "<span class=\"", cls, "\">", inner, "</span>")
         else
-            # Unknown face — emit unstyled text, never crash
             write(buf, inner)
         end
 
@@ -184,28 +198,23 @@ function emit_range(
         i   = j
     end
 
-    # Emit any trailing plain text within this window
+    # trailing text after all annotations in this window
     if pos <= to
         write(buf, escape_html(code[pos:to]))
     end
 end
 
 # ---------------------------------------------------------------------------
-# highlight_html — public entry point for plain Julia code blocks
-#
-# Returns an HTML string with <span> tags for all recognized faces.
-# Falls back to escaped plain text on Julia < 1.11 or empty annotation set.
+# highlight_html — main entry point for ```julia blocks
 # ---------------------------------------------------------------------------
 function highlight_html(code::String) :: String
-    # FIX 5: VERSION guard — graceful degradation on older Julia
     if !JULIASYNTAX_AVAILABLE
         return escape_html(code)
     end
 
-    annotated   = JuliaSyntaxHighlighting.highlight(code)
+    annotated   = JuliaSyntaxHighlighting.highlight(code, syntax_errors=false)
     annotations = Base.annotations(annotated)
 
-    # Extract only :face annotations, apply Unicode-safe sort (FIX 1)
     face_anns = sort(
         [(ann.region, ann.value)
          for ann in annotations if ann.label === :face],
@@ -224,16 +233,16 @@ function highlight_html(code::String) :: String
 end
 
 # ---------------------------------------------------------------------------
-# highlight_html_repl — FIX 4: julia-repl block handler
+# highlight_html_repl — FIX 4: ```julia-repl blocks
 #
-# Documenter has two code fence types: ```julia and ```julia-repl.
-# The REPL format has three line types:
-#   1. Prompt lines:      "julia> <expr>"  — highlight expr, style prompt
-#   2. Continuation lines "       <expr>"  — highlight as Julia
-#   3. Output/error lines everything else  — styled as comment/output
+# Documenter has two Julia fence types. The REPL format needs special handling
+# because you can't just run the whole block through highlight() — the output
+# lines aren't Julia code. Split by line, handle each case separately.
 #
-# This is intentionally conservative — a complete implementation would
-# also handle stacktrace lines, but this covers the common cases correctly.
+# Three cases:
+#   "julia> expr"  — highlight just the expr part, style the prompt
+#   "       expr"  — continuation line (7 spaces = "julia> " width), highlight it
+#   anything else  — output/error, styled as comment or error
 # ---------------------------------------------------------------------------
 function highlight_html_repl(code::String) :: String
     buf   = IOBuffer()
@@ -244,19 +253,16 @@ function highlight_html_repl(code::String) :: String
         suffix = k < n ? "\n" : ""
 
         if startswith(line, "julia> ")
-            # Prompt + highlighted expression
-            expr = String(line[8:end])  # after "julia> "
+            expr = String(line[8:end])
             write(buf,
                 "<span class=\"hljs-meta\">julia&gt;</span> ",
                 highlight_html(expr),
                 suffix)
 
         elseif startswith(line, "       ") && !isempty(rstrip(line))
-            # Continuation line (7-space indent matching "julia> " width)
             write(buf, highlight_html(String(line)), suffix)
 
-        elseif startswith(line, "ERROR:") || startswith(line, "ERROR")
-            # Error output — styled distinctly
+        elseif startswith(line, "ERROR:")
             write(buf,
                 "<span class=\"hljs-error\">",
                 escape_html(String(line)),
@@ -264,7 +270,6 @@ function highlight_html_repl(code::String) :: String
                 suffix)
 
         else
-            # Output, blank lines, stacktrace frames
             write(buf,
                 "<span class=\"hljs-comment\">",
                 escape_html(String(line)),
@@ -277,18 +282,18 @@ function highlight_html_repl(code::String) :: String
 end
 
 # ---------------------------------------------------------------------------
-# Test cases
+# test cases
 # ---------------------------------------------------------------------------
 const TEST_CASES = [
     (
-        "Basic function definition",
+        "Basic function",
         """function greet(name::String)
     println("Hello, \$name")
     return nothing
 end"""
     ),
     (
-        "Macros — misclassified by highlight.js",
+        "Macros — highlight.js gets these wrong",
         """@time begin
     result = @allocated sort(rand(1000))
     @assert result > 0
@@ -296,20 +301,20 @@ end"""
 end"""
     ),
     (
-        "String interpolation — regex cannot model this",
+        "String interpolation — impossible to model with regex",
         """user = "Julia"
 msg  = "Hello, \$(user)! Version \$(VERSION)."
 cmd  = `echo \$msg`"""
     ),
     (
-        "Unicode identifiers — FIX 1 validates these",
+        "Unicode identifiers — what FIX 1 actually fixes",
         """α  = 0.01
 ∇f(x) = 2x
 Δt    = 1e-3
 x̄     = sum(α .* ∇f.(1:10)) * Δt"""
     ),
     (
-        "Numeric literals — all forms",
+        "Numbers — all the forms Julia accepts",
         """hex     = 0x1f3a
 binary  = 0b1010_1100
 octal   = 0o755
@@ -320,13 +325,13 @@ big     = 1_000_000"""
     (
         "Nested block comments — highlight.js fails here",
         """#= outer comment
-   #= inner nested comment =#
+   #= inner nested =#
    still in outer
 =#
-x = 42  # inline comment"""
+x = 42  # inline"""
     ),
     (
-        "Type annotations and where clauses",
+        "Types and where clauses",
         """struct Container{T <: AbstractFloat}
     value :: T
     label :: String
@@ -337,13 +342,18 @@ function process(c::Container{T}) where {T}
 end"""
     ),
     (
-        "XSS injection attempt — FIX 6 validates safety",
+        "Parametric types — curly brace rainbow",
+        """d = Dict{String, Vector{Int}}()
+push!(d, "key" => [1, 2, 3])"""
+    ),
+    (
+        "XSS attempt — FIX 3 + FIX 6",
         """x = "<script>alert('xss')</script>"
 y = a & b | c
 z = x > 0 ? "yes" : "no\""""
     ),
     (
-        "Zero-width annotation / malformed code — FIX 2 guard",
+        "Incomplete code — FIX 2 zero-width guard",
         """function incomplete(x
     y = x +"""
     ),
@@ -360,49 +370,41 @@ ERROR: UndefVarError: z not defined"""
 ]
 
 # ---------------------------------------------------------------------------
-# XSS / injection test suite — FIX 6
-# Verifies that no dangerous characters survive outside span tags.
+# XSS tests — FIX 6
 # ---------------------------------------------------------------------------
 function run_xss_tests()
-    println("  XSS / injection safety tests:")
+    println("  XSS safety:")
 
-    # Test 1: basic HTML chars escaped in plain text
     r1 = highlight_html("<b>bold</b>")
-    @assert !occursin("<b>", r1) "raw <b> tag leaked"
-    println("    [✓] Raw HTML tags escaped")
+    @assert !occursin("<b>", r1)
+    println("    [✓] raw HTML tags escaped")
 
-    # Test 2: ampersand escaped
     r2 = highlight_html("a & b")
-    @assert occursin("&amp;", r2) "& not escaped to &amp;"
-    println("    [✓] Ampersand escaped to &amp;")
+    @assert occursin("&amp;", r2)
+    println("    [✓] & → &amp;")
 
-    # Test 3: double quotes escaped inside attribute context
     r3 = escape_html("say \"hello\"")
-    @assert occursin("&quot;", r3) "\" not escaped"
-    println("    [✓] Double quotes escaped to &quot;")
+    @assert occursin("&quot;", r3)
+    println("    [✓] \" → &quot;")
 
-    # Test 4: single quotes escaped
     r4 = escape_html("it's")
-    @assert occursin("&#39;", r4) "' not escaped"
-    println("    [✓] Single quotes escaped to &#39;")
+    @assert occursin("&#39;", r4)
+    println("    [✓] ' → &#39;")
 
-    # Test 5: script injection attempt produces no live script tag
-    r5 = highlight_html("""x = "<script>alert(1)</script>\" """)
-    @assert !occursin("<script>", r5) "script tag leaked through"
-    println("    [✓] Script injection blocked")
+    r5 = highlight_html("""x = "<script>alert(1)</script>" """)
+    @assert !occursin("<script>", r5)
+    println("    [✓] script injection blocked")
 
-    # Test 6: stripped output contains no raw < or >
     r6 = highlight_html("f(x) = x > 0 ? x : -x")
     stripped = replace(r6, r"<[^>]+>" => "")
-    @assert !occursin('<', stripped) "raw < leaked outside spans"
-    @assert !occursin('>', stripped) "raw > leaked outside spans"
-    println("    [✓] No raw < or > outside span tags")
+    @assert !occursin('<', stripped) && !occursin('>', stripped)
+    println("    [✓] no raw < or > outside span tags")
 
     println()
 end
 
 # ---------------------------------------------------------------------------
-# HTML page generator
+# HTML output
 # ---------------------------------------------------------------------------
 function generate_html_page(test_cases) :: String
     buf = IOBuffer()
@@ -410,7 +412,7 @@ function generate_html_page(test_cases) :: String
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JuliaSyntaxBridge — PoC v2</title>
+<title>JuliaSyntaxBridge PoC</title>
 <style>
 body {
     font-family: -apple-system, sans-serif;
@@ -422,8 +424,7 @@ body {
     line-height: 1.6;
 }
 h1  { color: #9b72cf; border-bottom: 2px solid #9b72cf; padding-bottom: .5rem; }
-h2  { color: #7cb4dd; font-size: .95rem; margin: 1.8rem 0 .3rem;
-      font-family: monospace; }
+h2  { color: #7cb4dd; font-size: .95rem; margin: 1.8rem 0 .3rem; font-family: monospace; }
 pre {
     background: #0d1117;
     border: 1px solid #30363d;
@@ -432,27 +433,7 @@ pre {
     overflow-x: auto;
     margin: .4rem 0 1.2rem;
 }
-code {
-    font-family: "JuliaMono","Fira Code",monospace;
-    font-size: .87rem;
-    line-height: 1.75;
-}
-.stats {
-    background: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: .8rem 1.4rem;
-    margin-bottom: 1.8rem;
-    font-size: .85rem;
-    color: #7cb4dd;
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem 1.5rem;
-}
-.good { color: #7dbb8a; }
-.fix  { color: #d2a679; font-size: .78rem; font-family: monospace; }
-
-/* highlight.js-compatible CSS classes */
+code { font-family: "JuliaMono","Fira Code",monospace; font-size: .87rem; line-height: 1.75; }
 .hljs-keyword     { color: #ff7b72; font-weight: bold; }
 .hljs-string      { color: #79c0ff; }
 .hljs-comment     { color: #8b949e; font-style: italic; }
@@ -467,36 +448,18 @@ code {
 .hljs-regexp      { color: #7ee787; }
 .hljs-punctuation { color: #c9d1d9; }
 .hljs-subst       { color: #c9d1d9; }
-.hljs-error       { background: #8b1a1a; color: #fff; border-radius: 3px;
-                    padding: 0 3px; }
+.hljs-error       { background: #8b1a1a; color: #fff; border-radius: 3px; padding: 0 3px; }
 </style>
 </head>
 <body>
-<h1>JuliaSyntaxBridge PoC v2</h1>
-<p>
-  Bridges <strong>JuliaSyntaxHighlighting.jl</strong> (Julia stdlib) to
-  Documenter.jl HTML spans.<br>
-  Real AST parsing · Zero new dependencies · Zero Node.js · Build-time rendering.
-</p>
-<div class="stats">
-  <span class="good">✓ Zero new dependencies</span>
-  <span class="good">✓ Zero subprocesses</span>
-  <span class="good">✓ Zero regex parsing</span>
-  <span class="good">✓ Overlapping annotations → correctly nested spans</span>
-  <span class="good">✓ VERSION guard (degrades gracefully on Julia &lt; 1.11)</span>
-  <span class="good">✓ Unicode-safe annotation sorting</span>
-  <span class="good">✓ julia-repl block support</span>
-  <span class="good">✓ XSS-safe (no string interpolation in span emission)</span>
-</div>
+<h1>JuliaSyntaxBridge PoC</h1>
+<p>stdlib AST highlighting, zero new dependencies, build-time rendering.</p>
 """)
 
     for (title, code) in test_cases
-        # REPL blocks use the dedicated handler
-        if startswith(title, "REPL")
-            highlighted = highlight_html_repl(code)
-        else
-            highlighted = highlight_html(code)
-        end
+        highlighted = startswith(title, "REPL") ?
+            highlight_html_repl(code) :
+            highlight_html(code)
         write(buf, "<h2>", escape_html(title), "</h2>\n")
         write(buf, "<pre><code>", highlighted, "</code></pre>\n")
     end
@@ -506,20 +469,17 @@ code {
 end
 
 # ---------------------------------------------------------------------------
-# Main
+# main
 # ---------------------------------------------------------------------------
 function main()
     println()
-    println("JuliaSyntaxBridge PoC v2")
-    println("Julia version: $(VERSION)")
-    println("JuliaSyntax available: $(JULIASYNTAX_AVAILABLE)")
-    println("=" ^ 55)
+    println("JuliaSyntaxBridge PoC")
+    println("Julia $(VERSION) — JuliaSyntax available: $(JULIASYNTAX_AVAILABLE)")
+    println("=" ^ 50)
     println()
 
-    # --- XSS tests (FIX 6) ---
     run_xss_tests()
 
-    # --- Functional tests ---
     println("  Functional tests:")
     passed = 0
     failed = 0
@@ -531,12 +491,11 @@ function main()
                 highlight_html_repl(code) :
                 highlight_html(code)
 
-            @assert !isempty(result) "empty output"
+            @assert !isempty(result)
 
-            # No raw dangerous chars outside span tags
             stripped = replace(result, r"<[^>]+>" => "")
-            @assert !occursin('<', stripped) "raw < leaked"
-            @assert !occursin('>', stripped) "raw > leaked"
+            @assert !occursin('<', stripped)
+            @assert !occursin('>', stripped)
 
             println("✓")
             passed += 1
@@ -547,51 +506,32 @@ function main()
     end
 
     println()
-    println("  Results: $(passed)/$(passed + failed) passed")
+    println("  $(passed)/$(passed + failed) passed")
     println()
 
-    # --- Benchmark (FIX 7) ---
-    println("  Performance:")
-    sample = join([tc[2] for tc in TEST_CASES], "\n")
-
+    # benchmark
     if JULIASYNTAX_AVAILABLE
-        # Warm up
+        println("  Benchmark:")
+        sample = join([tc[2] for tc in TEST_CASES], "\n")
+
+        # two warmup runs before measuring
         highlight_html(sample)
         highlight_html(sample)
 
-        # Simple timing without BenchmarkTools dependency
         N = 50
-        t_start = time_ns()
-        for _ in 1:N
-            highlight_html(sample)
-        end
-        t_end = time_ns()
+        t0 = time_ns()
+        for _ in 1:N; highlight_html(sample); end
+        ms = (time_ns() - t0) / N / 1e6
 
-        ms = (t_end - t_start) / N / 1e6
-        chars = length(sample)
-
-        println("    Bridge (native):   $(round(ms, digits=3)) ms  ($(chars) chars, avg of $(N) runs)")
-        println("    Node.js IPC baseline: ~40–80 ms cold start + ~5–15 ms warm")
-        println("    Speedup estimate:  ~$(round(50 / ms, digits=0))x over cold Node.js start")
-    else
-        println("    [skipped — JuliaSyntaxHighlighting not available on Julia $(VERSION)]")
+        println("    bridge:         $(round(ms, digits=3)) ms avg over $(N) runs ($(length(sample)) chars)")
+        println("    node.js IPC:    ~40-80ms cold, ~5-15ms warm")
+        println("    rough speedup:  ~$(round(50 / ms, digits=0))x vs cold start")
+        println()
     end
 
-    println()
-
-    # --- Generate visual output ---
     html = generate_html_page(TEST_CASES)
     write("highlighted.html", html)
-    println("  Output → highlighted.html")
-    println()
-    println("  What this PoC demonstrates:")
-    println("    FIX 1  Unicode-safe sorting    → α, ∇f, Δt annotated correctly")
-    println("    FIX 2  Zero-width guard         → malformed code never crashes")
-    println("    FIX 3  No span interpolation    → XSS attack surface eliminated")
-    println("    FIX 4  julia-repl support        → prompt / output / error lines styled")
-    println("    FIX 5  VERSION guard             → degrades to plain text on Julia < 1.11")
-    println("    FIX 6  XSS test suite            → 6 injection scenarios validated")
-    println("    FIX 7  Benchmark                 → quantified speedup over Node.js IPC")
+    println("  wrote highlighted.html")
     println()
 end
 
