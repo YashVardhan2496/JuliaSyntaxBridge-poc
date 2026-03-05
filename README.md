@@ -76,7 +76,7 @@ FACE_TO_CSS mapping table
 
 ## Files
 ```
-JuliaSyntaxBridge_poc.jl   ← entire POC (~320 lines)
+JuliaSyntaxBridge_poc.jl   ← entire POC 538 lines (478 loc)
 highlighted.html            ← generated output (open in browser)
 README.md                   ← this file
 ```
