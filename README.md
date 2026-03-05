@@ -9,9 +9,6 @@ A proof-of-concept bridge connecting
 `JuliaSyntaxHighlighting.jl` (Julia stdlib) to HTML `<span>` elements
 using `hljs-*` CSS classes compatible with all existing Documenter.jl themes.
 
-Built as part of a GSoC 2026 proposal for:
-**"JuliaSyntax-based code highlighter for Documenter.jl"**
-
 ## The Problem
 
 Documenter.jl currently highlights Julia code by either:
