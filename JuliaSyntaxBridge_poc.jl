@@ -1,4 +1,4 @@
-# JuliaSyntaxBridge.jl — PoC v3 (GSoC 2026)
+# JuliaSyntaxBridge.jl — PoC v3 
 # Bridges JuliaSyntaxHighlighting.jl (Julia stdlib) into Documenter.jl
 # HTML spans AND LaTeX/PDF colour macros.
 #
