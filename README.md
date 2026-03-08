@@ -1,11 +1,16 @@
 # JuliaSyntaxBridge — Proof of Concept
 
-> GSoC 2026 proposal PoC · Closes [Issue #2224](https://github.com/JuliaDocs/Documenter.jl/issues/2224) · Mentors: Morten Piibeleht · Fredrik Ekre
+> Standalone proof-of-concept · Addresses Issue #2224 · JuliaDocs / Documenter.jl
 
 IMAGES:
-<img width="1192" height="672" alt="2" src="https://github.com/user-attachments/assets/f8ea8583-8608-41ab-9f0f-13aa2a4de539" />
-<img width="1167" height="635" alt="1" src="https://github.com/user-attachments/assets/2539ff89-ad49-4de9-bc23-f114cec3080d" />
-<img width="1148" height="686" alt="3" src="https://github.com/user-attachments/assets/1f22419e-b2e2-4d76-bcb0-be147907c512" />
+<img width="1324" height="725" alt="1" src="https://github.com/user-attachments/assets/bf98858b-d5d0-4d1c-9071-1e24122fa331" />
+<img width="1290" height="652" alt="2" src="https://github.com/user-attachments/assets/2fcf1bae-db92-45cf-9ff7-0ef80dc1b8ce" />
+<img width="1257" height="738" alt="3" src="https://github.com/user-attachments/assets/e75707db-252c-426d-b66f-04c073ca8906" />
+<img width="1353" height="720" alt="4" src="https://github.com/user-attachments/assets/74d3f730-2efc-47db-accd-2a64a95f7a9b" />
+<img width="1338" height="718" alt="5" src="https://github.com/user-attachments/assets/3dc53d42-2921-4e12-898b-fe9f7c1e1071" />
+<img width="1216" height="684" alt="6" src="https://github.com/user-attachments/assets/2e8ca706-036d-4da1-b420-49737805a32e" />
+<img width="1264" height="614" alt="7" src="https://github.com/user-attachments/assets/38a6821f-221d-4da7-9186-7bdab33f67c1" />
+
 
 A proof-of-concept bridge connecting `JuliaSyntaxHighlighting.jl` (Julia stdlib) to
 Documenter.jl's HTML and LaTeX/PDF output pipelines — zero new dependencies, real AST
