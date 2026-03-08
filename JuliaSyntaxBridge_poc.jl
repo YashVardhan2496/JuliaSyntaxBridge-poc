@@ -7,7 +7,7 @@
 #   2. Consistent annotation access: named fields (.region, .label, .value) throughout
 #   3. LaTeX path added: highlight_latex() + FACE_TO_LATEX + latex_escape()
 #   4. Straddling annotation fallback: characters preserved even for boundary-crossing spans
-#   5. Honest benchmark: measures bridge only; Node.js comparison deferred to Week 9
+#   5. Benchmark measures bridge processing time only; full Node.js comparison needs both installed
 #   6. Base.annotations() isolated behind get_face_annotations() wrapper
 #      — one edit point if the experimental API changes
 #   7. REPL byte-index comment: explains why line[8:end] is correct
@@ -849,9 +849,10 @@ function main()
     println("  $(passed)/$(passed + failed) passed")
     println()
 
-    # Honest benchmark: measures the bridge's own processing time only.
-    # Node.js IPC comparison will be done in Week 9 of GSoC using
-    # BenchmarkTools.jl running both paths on the same machine.
+    # Benchmark measures the bridge's own processing time only.
+    # Full Node.js comparison requires both runtimes installed on the same machine.
+    # Run with BenchmarkTools.jl for a rigorous apples-to-apples measurement.
+    
     if BRIDGE_AVAILABLE
         println("  Benchmark (bridge processing time only):")
         sample = join([tc[2] for tc in TEST_CASES], "\n")
@@ -873,9 +874,8 @@ function main()
         println("    LaTeX path:  $(round(latex_ms, digits=3)) ms avg over $(N) runs")
         println("    Sample size: $(length(sample)) chars across $(length(TEST_CASES)) blocks")
         println()
-        println("    NOTE: Node.js IPC baseline (~40-80ms cold start) will be measured")
-        println("    in Week 9 using BenchmarkTools.jl on both paths simultaneously.")
-        println("    This PoC measures only the bridge's own cost, not the comparison.")
+        println("    NOTE: full Node.js comparison requires both runtimes on the same machine.")
+        println("    This measures bridge processing cost only, not end-to-end build time.")
         println()
     end
 
