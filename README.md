@@ -26,7 +26,7 @@ Sample: 1101 characters across 13 representative code blocks.
 | HTML path | **0.387 ms** | Node.js subprocess spawn alone costs ~40–80ms before processing begins |
 | LaTeX path | **1.236 ms** | No equivalent exists — PDF highlighting is impossible with client-side JS |
 
-> Node.js apples-to-apples comparison deferred to Week 9 of GSoC —
+> Node.js apples-to-apples comparison deferred 
 > both paths on same machine simultaneously using BenchmarkTools.jl.
 
 ## The Problem
