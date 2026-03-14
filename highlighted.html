@@ -2,41 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JuliaSyntaxBridge PoC v3</title>
+<title>JuliaSyntaxBridge v4</title>
 <style>
-body {
-    font-family: -apple-system, sans-serif;
-    background: #1a1a2e;
-    color: #e0e0e0;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 2rem;
-    line-height: 1.6;
-}
-h1  { color: #9b72cf; border-bottom: 2px solid #9b72cf; padding-bottom: .5rem; }
-h2  { color: #7cb4dd; font-size: .95rem; margin: 1.8rem 0 .3rem; font-family: monospace; }
-.label { display: inline-block; font-size: .7rem; padding: 2px 6px; border-radius: 3px;
-         background: #2d333b; color: #aaa; margin-left: 8px; vertical-align: middle; }
-pre {
-    background: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: 1rem 1.4rem;
-    overflow-x: auto;
-    margin: .4rem 0;
-}
+body { font-family: -apple-system, sans-serif; background: #1a1a2e; color: #e0e0e0;
+       max-width: 960px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+h1   { color: #9b72cf; border-bottom: 2px solid #9b72cf; padding-bottom: .5rem; }
+h2   { color: #7cb4dd; font-size: .95rem; margin: 1.8rem 0 .3rem; font-family: monospace; }
+pre  { background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+       padding: 1rem 1.4rem; overflow-x: auto; margin: .4rem 0; }
 code { font-family: "JuliaMono","Fira Code",monospace; font-size: .87rem; line-height: 1.75; }
-.latex-preview {
-    background: #0d1117;
-    border: 1px solid #444;
-    border-radius: 8px;
-    padding: .6rem 1.4rem;
-    margin: 0 0 1.4rem;
-    font-family: monospace;
-    font-size: .78rem;
-    color: #aaa;
-    overflow-x: auto;
-}
+.latex-preview { background: #0d1117; border: 1px solid #444; border-radius: 8px;
+                 padding: .6rem 1.4rem; margin: 0 0 1.4rem; font-family: monospace;
+                 font-size: .78rem; color: #aaa; overflow-x: auto; }
 .hljs-keyword     { color: #ff7b72; font-weight: bold; }
 .hljs-string      { color: #79c0ff; }
 .hljs-comment     { color: #8b949e; font-style: italic; }
@@ -47,85 +24,85 @@ code { font-family: "JuliaMono","Fira Code",monospace; font-size: .87rem; line-h
 .hljs-type        { color: #f0c674; }
 .hljs-built_in    { color: #ffa657; }
 .hljs-symbol      { color: #d2a679; }
-.hljs-char        { color: #96d0ff; }
 .hljs-regexp      { color: #7ee787; }
 .hljs-punctuation { color: #c9d1d9; }
-.hljs-subst       { color: #c9d1d9; }
 .hljs-error       { background: #8b1a1a; color: #fff; border-radius: 3px; padding: 0 3px; }
 </style>
 </head>
 <body>
-<h1>JuliaSyntaxBridge PoC v3</h1>
-<p>stdlib AST highlighting — HTML path + LaTeX/PDF path — zero new dependencies.</p>
-<p style="font-size:.85rem;color:#888">Each block shows the HTML-rendered output above and the raw LaTeX macro output below.</p>
-<h2>Basic function<span class="label">HTML</span></h2>
+<h1>JuliaSyntaxBridge v4</h1>
+<p>AST-based highlighting — HTML + LaTeX — zero new dependencies.</p>
+<p style="font-size:.8rem;color:#666">
+  Julia 1.12.5 · BRIDGE_AVAILABLE = true
+</p>
+<h2>Basic function</h2>
 <pre><code><span class="hljs-keyword">function</span> <span class="hljs-title">greet</span><span class="hljs-punctuation">(</span>name<span class="hljs-type">::</span><span class="hljs-type"><span class="hljs-type">String</span></span><span class="hljs-punctuation">)</span>
     <span class="hljs-title">println</span><span class="hljs-punctuation">(</span><span class="hljs-string">&quot;</span><span class="hljs-string">Hello, </span>$name<span class="hljs-string">&quot;</span><span class="hljs-punctuation">)</span>
     <span class="hljs-keyword">return</span> <span class="hljs-symbol">nothing</span>
 <span class="hljs-keyword">end</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>\DocumenterJLKeyword{function} \DocumenterJLFunction{greet}\DocumenterJLPunct{(}name\DocumenterJLType{::}\DocumenterJLType{\DocumenterJLType{String}}\DocumenterJLPunct{)}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>\DocumenterJLKeyword{function} \DocumenterJLFunction{greet}\DocumenterJLPunct{(}name\DocumenterJLType{::}\DocumenterJLType{\DocumenterJLType{String}}\DocumenterJLPunct{)}
     \DocumenterJLFunction{println}\DocumenterJLPunct{(}\DocumenterJLString{&quot;}\DocumenterJLString{Hello, }\$name\DocumenterJLString{&quot;}\DocumenterJLPunct{)}
     \DocumenterJLKeyword{return} \DocumenterJLSymbol{nothing}
 \DocumenterJLKeyword{end}</div>
-<h2>Command strings — julia_cmd + julia_cmd_delim<span class="label">HTML</span></h2>
-<pre><code>cmd <span class="hljs-operator">=</span> `echo hello`
-<span class="hljs-title">run</span><span class="hljs-punctuation">(</span>`ls -la /tmp`<span class="hljs-punctuation">)</span>
-result <span class="hljs-operator">=</span> <span class="hljs-title">read</span><span class="hljs-punctuation">(</span>`git log --oneline`, <span class="hljs-type">String</span><span class="hljs-punctuation">)</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>cmd \DocumenterJLOperator{=} `echo hello`
-\DocumenterJLFunction{run}\DocumenterJLPunct{(}`ls -la /tmp`\DocumenterJLPunct{)}
-result \DocumenterJLOperator{=} \DocumenterJLFunction{read}\DocumenterJLPunct{(}`git log --oneline`, \DocumenterJLType{String}\DocumenterJLPunct{)}</div>
-<h2>Macros — highlight.js gets these wrong<span class="label">HTML</span></h2>
+<h2>Command strings</h2>
+<pre><code>cmd <span class="hljs-operator">=</span> <span class="hljs-string">`</span><span class="hljs-string">echo hello</span><span class="hljs-string">`</span>
+<span class="hljs-title">run</span><span class="hljs-punctuation">(</span><span class="hljs-string">`</span><span class="hljs-string">ls -la /tmp</span><span class="hljs-string">`</span><span class="hljs-punctuation">)</span>
+result <span class="hljs-operator">=</span> <span class="hljs-title">read</span><span class="hljs-punctuation">(</span><span class="hljs-string">`</span><span class="hljs-string">git log --oneline</span><span class="hljs-string">`</span>, <span class="hljs-type">String</span><span class="hljs-punctuation">)</span></code></pre>
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>cmd \DocumenterJLOperator{=} \DocumenterJLString{`}\DocumenterJLString{echo hello}\DocumenterJLString{`}
+\DocumenterJLFunction{run}\DocumenterJLPunct{(}\DocumenterJLString{`}\DocumenterJLString{ls -la /tmp}\DocumenterJLString{`}\DocumenterJLPunct{)}
+result \DocumenterJLOperator{=} \DocumenterJLFunction{read}\DocumenterJLPunct{(}\DocumenterJLString{`}\DocumenterJLString{git log --oneline}\DocumenterJLString{`}, \DocumenterJLType{String}\DocumenterJLPunct{)}</div>
+<h2>Macros</h2>
 <pre><code><span class="hljs-meta">@time</span> <span class="hljs-keyword">begin</span>
     result <span class="hljs-operator">=</span> <span class="hljs-meta">@allocated</span> <span class="hljs-title">sort</span><span class="hljs-punctuation">(</span><span class="hljs-title">rand</span><span class="hljs-punctuation">(</span><span class="hljs-number">1000</span><span class="hljs-punctuation">)</span><span class="hljs-punctuation">)</span>
     <span class="hljs-meta">@assert</span> result &gt; <span class="hljs-number">0</span>
     <span class="hljs-meta">@info</span> <span class="hljs-string">&quot;</span><span class="hljs-string">Done</span><span class="hljs-string">&quot;</span> result
 <span class="hljs-keyword">end</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>\DocumenterJLMacro{@time} \DocumenterJLKeyword{begin}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>\DocumenterJLMacro{@time} \DocumenterJLKeyword{begin}
     result \DocumenterJLOperator{=} \DocumenterJLMacro{@allocated} \DocumenterJLFunction{sort}\DocumenterJLPunct{(}\DocumenterJLFunction{rand}\DocumenterJLPunct{(}\DocumenterJLNumber{1000}\DocumenterJLPunct{)}\DocumenterJLPunct{)}
     \DocumenterJLMacro{@assert} result &gt; \DocumenterJLNumber{0}
     \DocumenterJLMacro{@info} \DocumenterJLString{&quot;}\DocumenterJLString{Done}\DocumenterJLString{&quot;} result
 \DocumenterJLKeyword{end}</div>
-<h2>String interpolation — impossible with regex<span class="label">HTML</span></h2>
+<h2>String interpolation</h2>
 <pre><code>user <span class="hljs-operator">=</span> <span class="hljs-string">&quot;</span><span class="hljs-string">Julia</span><span class="hljs-string">&quot;</span>
 msg  <span class="hljs-operator">=</span> <span class="hljs-string">&quot;</span><span class="hljs-string">Hello, </span>$<span class="hljs-punctuation">(</span>user<span class="hljs-punctuation">)</span><span class="hljs-string">! Version </span>$<span class="hljs-punctuation">(</span>VERSION<span class="hljs-punctuation">)</span><span class="hljs-string">.</span><span class="hljs-string">&quot;</span>
-cmd  <span class="hljs-operator">=</span> `echo $msg`</code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>user \DocumenterJLOperator{=} \DocumenterJLString{&quot;}\DocumenterJLString{Julia}\DocumenterJLString{&quot;}
+cmd  <span class="hljs-operator">=</span> <span class="hljs-string">`</span><span class="hljs-string">echo $msg</span><span class="hljs-string">`</span></code></pre>
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>user \DocumenterJLOperator{=} \DocumenterJLString{&quot;}\DocumenterJLString{Julia}\DocumenterJLString{&quot;}
 msg  \DocumenterJLOperator{=} \DocumenterJLString{&quot;}\DocumenterJLString{Hello, }\$\DocumenterJLPunct{(}user\DocumenterJLPunct{)}\DocumenterJLString{! Version }\$\DocumenterJLPunct{(}VERSION\DocumenterJLPunct{)}\DocumenterJLString{.}\DocumenterJLString{&quot;}
-cmd  \DocumenterJLOperator{=} `echo \$msg`</div>
-<h2>Unicode identifiers — FIX 1 (byte-safe sort)<span class="label">HTML</span></h2>
+cmd  \DocumenterJLOperator{=} \DocumenterJLString{`}\DocumenterJLString{echo \$msg}\DocumenterJLString{`}</div>
+<h2>Unicode identifiers</h2>
 <pre><code>α  <span class="hljs-operator">=</span> <span class="hljs-number">0.01</span>
 <span class="hljs-title">∇f</span><span class="hljs-punctuation">(</span>x<span class="hljs-punctuation">)</span> <span class="hljs-operator">=</span> <span class="hljs-number">2</span>x
 Δt    <span class="hljs-operator">=</span> <span class="hljs-number">1e-3</span>
 x̄     <span class="hljs-operator">=</span> <span class="hljs-title">sum</span><span class="hljs-punctuation">(</span>α <span class="hljs-operator">.</span>* <span class="hljs-title">∇f</span><span class="hljs-operator">.</span><span class="hljs-punctuation">(</span><span class="hljs-number">1</span>:<span class="hljs-number">10</span><span class="hljs-punctuation">)</span><span class="hljs-punctuation">)</span> * Δt</code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>α  \DocumenterJLOperator{=} \DocumenterJLNumber{0.01}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>α  \DocumenterJLOperator{=} \DocumenterJLNumber{0.01}
 \DocumenterJLFunction{∇f}\DocumenterJLPunct{(}x\DocumenterJLPunct{)} \DocumenterJLOperator{=} \DocumenterJLNumber{2}x
 Δt    \DocumenterJLOperator{=} \DocumenterJLNumber{1e-3}
 x̄     \DocumenterJLOperator{=} \DocumenterJLFunction{sum}\DocumenterJLPunct{(}α \DocumenterJLOperator{.}* \DocumenterJLFunction{∇f}\DocumenterJLOperator{.}\DocumenterJLPunct{(}\DocumenterJLNumber{1}:\DocumenterJLNumber{10}\DocumenterJLPunct{)}\DocumenterJLPunct{)} * Δt</div>
-<h2>Numbers — all Julia literal forms<span class="label">HTML</span></h2>
+<h2>Number literals</h2>
 <pre><code>hex     <span class="hljs-operator">=</span> <span class="hljs-number">0x1f3a</span>
 binary  <span class="hljs-operator">=</span> <span class="hljs-number">0b1010_1100</span>
 octal   <span class="hljs-operator">=</span> <span class="hljs-number">0o755</span>
 sci     <span class="hljs-operator">=</span> <span class="hljs-number">1.5e-3</span>
 complex <span class="hljs-operator">=</span> <span class="hljs-number">2</span> + <span class="hljs-number">3</span>im
 big     <span class="hljs-operator">=</span> <span class="hljs-number">1_000_000</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>hex     \DocumenterJLOperator{=} \DocumenterJLNumber{0x1f3a}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>hex     \DocumenterJLOperator{=} \DocumenterJLNumber{0x1f3a}
 binary  \DocumenterJLOperator{=} \DocumenterJLNumber{0b1010\_1100}
 octal   \DocumenterJLOperator{=} \DocumenterJLNumber{0o755}
 sci     \DocumenterJLOperator{=} \DocumenterJLNumber{1.5e-3}
 complex \DocumenterJLOperator{=} \DocumenterJLNumber{2} + \DocumenterJLNumber{3}im
 big     \DocumenterJLOperator{=} \DocumenterJLNumber{1\_000\_000}</div>
-<h2>Nested block comments — AST handles natively<span class="label">HTML</span></h2>
-<pre><code><span class="hljs-comment">#= outer comment
-   #= inner nested =#
-   still in outer
+<h2>Nested block comments</h2>
+<pre><code><span class="hljs-comment">#= outer
+   #= inner =#
+   still outer
 =#</span>
 x <span class="hljs-operator">=</span> <span class="hljs-number">42</span>  <span class="hljs-comment"># inline</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>\DocumenterJLComment{\#= outer comment
-   \#= inner nested =\#
-   still in outer
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>\DocumenterJLComment{\#= outer
+   \#= inner =\#
+   still outer
 =\#}
 x \DocumenterJLOperator{=} \DocumenterJLNumber{42}  \DocumenterJLComment{\# inline}</div>
-<h2>Types and where clauses<span class="label">HTML</span></h2>
+<h2>Types and where clauses</h2>
 <pre><code><span class="hljs-keyword">struct</span> <span class="hljs-type">Container</span><span class="hljs-punctuation">{</span>T &lt;: <span class="hljs-type">AbstractFloat</span><span class="hljs-punctuation">}</span>
     value <span class="hljs-type">::</span><span class="hljs-type"> T</span>
     label <span class="hljs-type">::</span><span class="hljs-type"> <span class="hljs-type">String</span></span>
@@ -134,7 +111,7 @@ x \DocumenterJLOperator{=} \DocumenterJLNumber{42}  \DocumenterJLComment{\# inli
 <span class="hljs-keyword">function</span> <span class="hljs-title">process</span><span class="hljs-punctuation">(</span>c<span class="hljs-type">::</span><span class="hljs-type"><span class="hljs-type">Container</span><span class="hljs-punctuation">{</span><span class="hljs-type">T</span><span class="hljs-punctuation">}</span></span><span class="hljs-punctuation">)</span> <span class="hljs-keyword">where</span><span class="hljs-type"> <span class="hljs-punctuation">{</span>T<span class="hljs-punctuation">}</span></span>
     <span class="hljs-keyword">return</span> c.value <span class="hljs-type">::</span><span class="hljs-type"> T</span>
 <span class="hljs-keyword">end</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>\DocumenterJLKeyword{struct} \DocumenterJLType{Container}\DocumenterJLPunct{\{}T &lt;: \DocumenterJLType{AbstractFloat}\DocumenterJLPunct{\}}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>\DocumenterJLKeyword{struct} \DocumenterJLType{Container}\DocumenterJLPunct{\{}T &lt;: \DocumenterJLType{AbstractFloat}\DocumenterJLPunct{\}}
     value \DocumenterJLType{::}\DocumenterJLType{ T}
     label \DocumenterJLType{::}\DocumenterJLType{ \DocumenterJLType{String}}
 \DocumenterJLKeyword{end}
@@ -142,31 +119,31 @@ x \DocumenterJLOperator{=} \DocumenterJLNumber{42}  \DocumenterJLComment{\# inli
 \DocumenterJLKeyword{function} \DocumenterJLFunction{process}\DocumenterJLPunct{(}c\DocumenterJLType{::}\DocumenterJLType{\DocumenterJLType{Container}\DocumenterJLPunct{\{}\DocumenterJLType{T}\DocumenterJLPunct{\}}}\DocumenterJLPunct{)} \DocumenterJLKeyword{where}\DocumenterJLType{ \DocumenterJLPunct{\{}T\DocumenterJLPunct{\}}}
     \DocumenterJLKeyword{return} c.value \DocumenterJLType{::}\DocumenterJLType{ T}
 \DocumenterJLKeyword{end}</div>
-<h2>Parametric types — curly brace rainbow<span class="label">HTML</span></h2>
+<h2>Parametric types</h2>
 <pre><code>d <span class="hljs-operator">=</span> <span class="hljs-type">Dict</span><span class="hljs-punctuation">{</span><span class="hljs-type">String</span>, <span class="hljs-type">Vector</span><span class="hljs-punctuation">{</span><span class="hljs-type">Int</span><span class="hljs-punctuation">}</span><span class="hljs-punctuation">}</span><span class="hljs-punctuation">(</span><span class="hljs-punctuation">)</span>
 <span class="hljs-title">push!</span><span class="hljs-punctuation">(</span>d, <span class="hljs-string">&quot;</span><span class="hljs-string">key</span><span class="hljs-string">&quot;</span> <span class="hljs-type">=&gt;</span> <span class="hljs-punctuation">[</span><span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">)</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>d \DocumenterJLOperator{=} \DocumenterJLType{Dict}\DocumenterJLPunct{\{}\DocumenterJLType{String}, \DocumenterJLType{Vector}\DocumenterJLPunct{\{}\DocumenterJLType{Int}\DocumenterJLPunct{\}}\DocumenterJLPunct{\}}\DocumenterJLPunct{(}\DocumenterJLPunct{)}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>d \DocumenterJLOperator{=} \DocumenterJLType{Dict}\DocumenterJLPunct{\{}\DocumenterJLType{String}, \DocumenterJLType{Vector}\DocumenterJLPunct{\{}\DocumenterJLType{Int}\DocumenterJLPunct{\}}\DocumenterJLPunct{\}}\DocumenterJLPunct{(}\DocumenterJLPunct{)}
 \DocumenterJLFunction{push!}\DocumenterJLPunct{(}d, \DocumenterJLString{&quot;}\DocumenterJLString{key}\DocumenterJLString{&quot;} \DocumenterJLType{=&gt;} \DocumenterJLPunct{[}\DocumenterJLNumber{1}, \DocumenterJLNumber{2}, \DocumenterJLNumber{3}\DocumenterJLPunct{]}\DocumenterJLPunct{)}</div>
-<h2>XSS attempt — HTML path safety<span class="label">HTML</span></h2>
+<h2>XSS attempt</h2>
 <pre><code>x <span class="hljs-operator">=</span> <span class="hljs-string">&quot;</span><span class="hljs-string">&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</span><span class="hljs-string">&quot;</span>
 y <span class="hljs-operator">=</span> a &amp; b | c
 z <span class="hljs-operator">=</span> x &gt; <span class="hljs-number">0</span> ? <span class="hljs-string">&quot;</span><span class="hljs-string">yes</span><span class="hljs-string">&quot;</span> : <span class="hljs-string">&quot;</span><span class="hljs-string">no</span><span class="hljs-string">&quot;</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>x \DocumenterJLOperator{=} \DocumenterJLString{&quot;}\DocumenterJLString{&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;}\DocumenterJLString{&quot;}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>x \DocumenterJLOperator{=} \DocumenterJLString{&quot;}\DocumenterJLString{&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;}\DocumenterJLString{&quot;}
 y \DocumenterJLOperator{=} a \&amp; b | c
 z \DocumenterJLOperator{=} x &gt; \DocumenterJLNumber{0} ? \DocumenterJLString{&quot;}\DocumenterJLString{yes}\DocumenterJLString{&quot;} : \DocumenterJLString{&quot;}\DocumenterJLString{no}\DocumenterJLString{&quot;}</div>
-<h2>LaTeX special chars — LaTeX path safety<span class="label">HTML</span></h2>
-<pre><code><span class="hljs-comment"># LaTeX specials: &amp; % $ # _ { } ^ ~ \</span>
+<h2>LaTeX special chars</h2>
+<pre><code><span class="hljs-comment"># specials: &amp; % $ # _ { } ^ ~ \</span>
 result <span class="hljs-operator">=</span> <span class="hljs-type">Dict</span><span class="hljs-punctuation">{</span><span class="hljs-type">String</span>,<span class="hljs-type">Int</span><span class="hljs-punctuation">}</span><span class="hljs-punctuation">(</span><span class="hljs-string">&quot;</span><span class="hljs-string">key</span><span class="hljs-string">&quot;</span> <span class="hljs-type">=&gt;</span> <span class="hljs-number">42</span><span class="hljs-punctuation">)</span>
 formula <span class="hljs-operator">=</span> x^<span class="hljs-number">2</span> + y_1 ~ <span class="hljs-number">0</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>\DocumenterJLComment{\# LaTeX specials: \&amp; \% \$ \# \_ \{ \} \^{} \textasciitilde{} \textbackslash\{\}}
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>\DocumenterJLComment{\# specials: \&amp; \% \$ \# \_ \{ \} \^{} \textasciitilde{} \textbackslash\{\}}
 result \DocumenterJLOperator{=} \DocumenterJLType{Dict}\DocumenterJLPunct{\{}\DocumenterJLType{String},\DocumenterJLType{Int}\DocumenterJLPunct{\}}\DocumenterJLPunct{(}\DocumenterJLString{&quot;}\DocumenterJLString{key}\DocumenterJLString{&quot;} \DocumenterJLType{=&gt;} \DocumenterJLNumber{42}\DocumenterJLPunct{)}
 formula \DocumenterJLOperator{=} x\^{}\DocumenterJLNumber{2} + y\_1 \textasciitilde{} \DocumenterJLNumber{0}</div>
-<h2>Incomplete code — FIX 2 zero-width guard<span class="label">HTML</span></h2>
+<h2>Incomplete code</h2>
 <pre><code><span class="hljs-keyword">function</span> <span class="hljs-title">incomplete</span><span class="hljs-punctuation">(</span>x
 y = x <span class="hljs-operator">+</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>\DocumenterJLKeyword{function} \DocumenterJLFunction{incomplete}\DocumenterJLPunct{(}x
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>\DocumenterJLKeyword{function} \DocumenterJLFunction{incomplete}\DocumenterJLPunct{(}x
 y = x \DocumenterJLOperator{+}</div>
-<h2>REPL block — FIX 4<span class="label">HTML</span></h2>
+<h2>REPL block</h2>
 <pre><code><span class="hljs-meta">julia&gt;</span> x <span class="hljs-operator">=</span> <span class="hljs-number">1</span> + <span class="hljs-number">2</span>
 <span class="hljs-comment">3</span>
 <span class="hljs-comment"></span>
@@ -174,12 +151,23 @@ y = x \DocumenterJLOperator{+}</div>
 <span class="hljs-comment">hello</span>
 <span class="hljs-comment"></span>
 <span class="hljs-error">ERROR: UndefVarError: z not defined</span></code></pre>
-<div class="latex-preview"><strong style="color:#666;font-size:.72rem">LaTeX output: </strong>julia&gt; x = 1 + 2
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>julia&gt; x = 1 + 2
 3
 
 julia&gt; println(&quot;hello&quot;)
 hello
 
 ERROR: UndefVarError: z not defined</div>
+<h2>Face coverage</h2>
+<pre><code>flag <span class="hljs-operator">=</span> <span class="hljs-number">true</span>
+sym  <span class="hljs-operator">=</span> <span class="hljs-symbol">:mysymbol</span>
+pat  <span class="hljs-operator">=</span> <span class="hljs-meta">r</span><span class="hljs-string">&quot;</span><span class="hljs-string">[0-9]+</span><span class="hljs-string">&quot;</span>
+cmd  <span class="hljs-operator">=</span> <span class="hljs-string">`</span><span class="hljs-string">echo hello</span><span class="hljs-string">`</span>
+x <span class="hljs-type">::</span><span class="hljs-type"> <span class="hljs-type">Int</span></span> <span class="hljs-operator">=</span> <span class="hljs-number">42</span></code></pre>
+<div class="latex-preview"><strong style="color:#555;font-size:.7rem">LaTeX: </strong>flag \DocumenterJLOperator{=} \DocumenterJLNumber{true}
+sym  \DocumenterJLOperator{=} \DocumenterJLSymbol{:mysymbol}
+pat  \DocumenterJLOperator{=} \DocumenterJLMacro{r}\DocumenterJLString{&quot;}\DocumenterJLString{[0-9]+}\DocumenterJLString{&quot;}
+cmd  \DocumenterJLOperator{=} \DocumenterJLString{`}\DocumenterJLString{echo hello}\DocumenterJLString{`}
+x \DocumenterJLType{::}\DocumenterJLType{ \DocumenterJLType{Int}} \DocumenterJLOperator{=} \DocumenterJLNumber{42}</div>
 </body>
 </html>
