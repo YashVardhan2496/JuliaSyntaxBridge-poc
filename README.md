@@ -1,17 +1,17 @@
 # JuliaSyntaxBridge — Proof of Concept
 
-Images of generated html output:
-
-
-
 > Standalone proof-of-concept · Addresses Issue #2224 · JuliaDocs / Documenter.jl
 
 ## Output
+<img width="1311" height="717" alt="Image" src="https://github.com/user-attachments/assets/82586a61-97c4-4483-bd3f-e865f99f169b" />
+<img width="1280" height="698" alt="Image" src="https://github.com/user-attachments/assets/f8b8ec45-4187-428a-b22a-fd15af4fa228" />
+<img width="1270" height="725" alt="Image" src="https://github.com/user-attachments/assets/609fb038-8bad-4379-aa52-c716da6c85f2" />
+<img width="1274" height="746" alt="Image" src="https://github.com/user-attachments/assets/2119f51e-f7cd-486c-a429-59440ef0a5da" />
+<img width="1249" height="649" alt="Image" src="https://github.com/user-attachments/assets/199cc91a-9b0e-4798-a892-dde2baa55719" />
+<img width="1198" height="688" alt="Image" src="https://github.com/user-attachments/assets/4b3093ef-69c3-452c-953d-d2c3f11003ac" />
+<img width="1234" height="700" alt="Image" src="https://github.com/user-attachments/assets/84d673e5-8e16-45e9-be50-68d0a5405571" />
+<img width="1259" height="715" alt="Image" src="https://github.com/user-attachments/assets/cd0999c6-d54a-4650-a7c3-0f92e810b191" />
 
-![Basic function and command strings](https://github.com/user-attachments/assets/bf98858b-d5d0-4d1c-9071-1e24122fa331)
-![Macros and string interpolation](https://github.com/user-attachments/assets/2fcf1bae-db92-45cf-9ff7-0ef80dc1b8ce)
-![Unicode and numbers](https://github.com/user-attachments/assets/e75707db-252c-426d-b66f-04c073ca8906)
-![Types and REPL](https://github.com/user-attachments/assets/74d3f730-2efc-47db-accd-2a64a95f7a9b)
 
 ## Benchmark
 
