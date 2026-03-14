@@ -360,7 +360,7 @@ ERROR: UndefVarError: z not defined"""),
     ("Face coverage",
     """flag = true
 sym  = :mysymbol
-pat  = r"hello\s+world"
+pat  = r"[0-9]+"
 cmd  = `echo hello`
 x :: Int = 42"""),
 ]
