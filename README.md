@@ -2,6 +2,8 @@
 
 > Standalone proof-of-concept · Addresses Issue #2224 · JuliaDocs / Documenter.jl
 
+> Note: The face table in this PoC was verified against the official Julia 1.12.5 documentation. The live stdlib source has since diverged slightly — :julia_cmdstring has been replaced by :julia_cmd and :julia_cmd_delim, and :julia_funcdef and :julia_opassignment are not yet listed in the docs. The bridge implementation will be built against the live code, not the documentation.
+
 ## Output
 <img width="1311" height="717" alt="Image" src="https://github.com/user-attachments/assets/82586a61-97c4-4483-bd3f-e865f99f169b" />
 <img width="1280" height="698" alt="Image" src="https://github.com/user-attachments/assets/f8b8ec45-4187-428a-b22a-fd15af4fa228" />
