@@ -2,7 +2,7 @@
 
 > Standalone proof-of-concept · Addresses Issue #2224 · JuliaDocs / Documenter.jl
 
-> Note: The face table in this PoC was verified against the live Julia 1.12.5 stdlib source — not the official documentation, which is slightly out of sync. `:julia_cmdstring` no longer exists in the live code and has been replaced by `:julia_cmd` and `:julia_cmd_delim`. `:julia_funcdef` and `:julia_opassignment` are present in the live code but not yet listed in the docs. The bridge implementation is built against the live code, not the documentation.
+> Note: The face table in this PoC was verified against the live Julia 1.12.5 runtime and the official 1.12.5 documentation — both agree on 43 faces. The stdlib source on the main branch has since diverged: `:julia_cmdstring` will be replaced by `:julia_cmd` and `:julia_cmd_delim`, and `:julia_funcdef` and `:julia_opassignment` will be added in a future release. The bridge is built against the shipped 1.12.5 stdlib, not the unreleased main branch.
 
 ## Output
 
@@ -55,7 +55,7 @@ Julia code → JuliaSyntaxHighlighting.highlight() → bridge → HTML spans
 | `"Hello $name"` — interpolation | Flat token | ✓ Correctly nested |
 | `α`, `∇f`, `Δt` — unicode | Often broken | ✓ Correct (byte-safe sort) |
 | `0x1f`, `0b1010_1100`, `1.5e-3` — numerics | Sometimes wrong | ✓ All literal forms correct |
-| `` `echo $msg` `` — command strings | Not recognised | ✓ `:julia_cmd` and `:julia_cmd_delim` mapped |
+| `` `echo $msg` `` — command strings | Not recognised | ✓ `:julia_cmdstring` mapped |
 | `#= nested #= inner =# =#` — block comments | Wrong | ✓ Any nesting depth |
 | Incomplete / malformed code | May crash | ✓ Graceful — zero-width guard |
 | LaTeX/PDF output | Impossible | ✓ `\DocumenterJLKeyword{function}` macros |
@@ -90,7 +90,7 @@ JuliaSyntaxHighlighting.highlight(code)    ← stdlib · zero deps · real AST
         ↓
 get_face_annotations()                     ← isolates experimental Base.annotations() API
         ↓
-Vector of (region::UnitRange{Int64}, face::Symbol)   ← 46 faces
+Vector of (region::UnitRange{Int64}, face::Symbol)   ← 43 faces
         ↓
 annotation_sort_key()                      ← byte sort · Unicode-safe
         ↓
@@ -115,7 +115,7 @@ annotation_sort_key()                      ← byte sort · Unicode-safe
 
 ## Face Coverage
 
-All 46 faces in `JuliaSyntaxHighlighting.HIGHLIGHT_FACES` mapped — verified against live runtime on Julia 1.12.5 via:
+All 43 faces in `JuliaSyntaxHighlighting.HIGHLIGHT_FACES` mapped — verified against live runtime on Julia 1.12.5 via:
 
 ```julia
 for (name, _) in JuliaSyntaxHighlighting.HIGHLIGHT_FACES
@@ -124,8 +124,7 @@ end
 ```
 
 - 18 rainbow paren/bracket/curly entries (6 levels × 3 types) all mapped
-- `:julia_cmd` and `:julia_cmd_delim` are the current face names for backtick command strings — `:julia_cmdstring` no longer exists in the live stdlib
-- `:julia_funcdef` and `:julia_opassignment` are present in the live stdlib and mapped
+- `:julia_cmdstring` is the correct face name for backtick command strings on Julia 1.12.5 — the main branch has since replaced it with `:julia_cmd` and `:julia_cmd_delim`, but the bridge is built against the shipped runtime
 - `:julia_backslash_literal` maps to `hljs-string` — `hljs-char` is absent from `default.css`
 
 ## Files
@@ -145,7 +144,7 @@ README.md                   ← this file
 **v4**
 - Guard: `VERSION >= v"1.12"` → `isfile(joinpath(Sys.STDLIB, "JuliaSyntaxHighlighting", "src", "JuliaSyntaxHighlighting.jl"))` — verified correct on Julia 1.12.5 in fresh REPL
 - Import: `import Base.JuliaSyntaxHighlighting` → `using JuliaSyntaxHighlighting`
-- Face table: updated to 46 faces against live stdlib — removed `:julia_cmdstring`, added `:julia_cmd`, `:julia_cmd_delim`, `:julia_funcdef`, `:julia_opassignment`
+- Face table: 43 faces verified against live runtime on Julia 1.12.5 — runtime and official documentation agree
 - Fixed: `:julia_backslash_literal` → `hljs-string` (`hljs-char` absent from `default.css`)
 - Added: character completeness test and face coverage test case (14 tests total)
 
