@@ -16,7 +16,7 @@ function get_face_annotations(code::String)::Vector
     return [(ann.region, ann.value) for ann in raw_anns if ann.label === :face]
 end
 
-# All 43 faces verified against live runtime on Julia 1.12.5
+# All 46 faces verified against live runtime on Julia 1.12.5
 const FACE_TO_CSS = Dict{Symbol,String}(
     :julia_macro                => "hljs-meta",
     :julia_symbol               => "hljs-symbol",
@@ -28,7 +28,10 @@ const FACE_TO_CSS = Dict{Symbol,String}(
     :julia_regex                => "hljs-regexp",
     :julia_backslash_literal    => "hljs-string",
     :julia_string_delim         => "hljs-string",
-    :julia_cmdstring            => "hljs-string",
+    :julia_cmd                  => "hljs-string",
+    :julia_cmd_delim            => "hljs-string",
+    :julia_funcdef              => "hljs-title",
+    :julia_opassignment         => "hljs-operator",
     :julia_char                 => "hljs-string",
     :julia_char_delim           => "hljs-string",
     :julia_number               => "hljs-number",
@@ -74,7 +77,10 @@ const FACE_TO_LATEX = Dict{Symbol,String}(
     :julia_regex                => "DocumenterJLString",
     :julia_backslash_literal    => "DocumenterJLString",
     :julia_string_delim         => "DocumenterJLString",
-    :julia_cmdstring            => "DocumenterJLString",
+    :julia_cmd                  => "DocumenterJLString",
+    :julia_cmd_delim            => "DocumenterJLString",
+    :julia_funcdef              => "DocumenterJLFunction",
+    :julia_opassignment         => "DocumenterJLOperator",
     :julia_char                 => "DocumenterJLString",
     :julia_char_delim           => "DocumenterJLString",
     :julia_number               => "DocumenterJLNumber",
